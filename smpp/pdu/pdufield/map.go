@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go-smpp/smpp/pdu/pdutext"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdutext"
 )
 
 // Map is a collection of PDU field data indexed by name.

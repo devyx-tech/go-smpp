@@ -13,7 +13,7 @@ import (
 	"net"
 	"sync"
 
-	"go-smpp/smpp/pdu"
+	"github.com/devyx-tech/go-smpp/smpp/pdu"
 )
 
 var (
