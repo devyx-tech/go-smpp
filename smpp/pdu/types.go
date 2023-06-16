@@ -218,6 +218,8 @@ func newSubmitSM(hdr *Header) *Codec {
 			pdufield.DataCoding,
 			pdufield.SMDefaultMsgID,
 			pdufield.SMLength,
+			pdufield.UDHLength,
+			pdufield.GSMUserData,
 			pdufield.ShortMessage,
 		},
 	}
