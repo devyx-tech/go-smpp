@@ -46,7 +46,9 @@ const (
 	SourceAddrTON        Name = "source_addr_ton"
 	SystemID             Name = "system_id"
 	SystemType           Name = "system_type"
+	UDHHeader            Name = "udh_header"
 	UDHLength            Name = "gsm_sms_ud.udh.len"
+	UDHFlag              Name = "udh_flag"
 	GSMUserData          Name = "gsm_sms_ud.udh"
 	UnsuccessSme         Name = "unsuccess_sme"
 	ValidityPeriod       Name = "validity_period"
@@ -403,5 +405,38 @@ func (udhl *UDHList) Bytes() []byte {
 // SerializeTo implements the Data interface.
 func (udhl *UDHList) SerializeTo(w io.Writer) error {
 	_, err := w.Write(udhl.Bytes())
+	return err
+}
+
+type Flag struct {
+	Data bool
+}
+
+func (f *Flag) Len() int {
+	return 1
+}
+
+func (f *Flag) Raw() interface{} {
+	return f.Data
+}
+
+func (f *Flag) String() string {
+	if f.Data {
+		return "true"
+	}
+
+	return "false"
+}
+
+func (f *Flag) Bytes() []byte {
+	if f.Data {
+		return []byte{0x01}
+	}
+
+	return []byte{0x00}
+}
+
+func (f *Flag) SerializeTo(w io.Writer) error {
+	_, err := w.Write(f.Bytes())
 	return err
 }

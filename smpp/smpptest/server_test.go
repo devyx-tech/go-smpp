@@ -9,10 +9,10 @@ import (
 	"net"
 	"testing"
 
-	"github.com/veoo/go-smpp/smpp/pdu"
-	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
-	"github.com/veoo/go-smpp/smpp/pdu/pdutlv"
+	"go-smpp/smpp/pdu"
+	"go-smpp/smpp/pdu/pdufield"
+	"go-smpp/smpp/pdu/pdutext"
+	"go-smpp/smpp/pdu/pdutlv"
 )
 
 func TestServer(t *testing.T) {

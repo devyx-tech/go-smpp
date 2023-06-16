@@ -11,8 +11,8 @@ import (
 	"io"
 	"sync/atomic"
 
-	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
-	"github.com/veoo/go-smpp/smpp/pdu/pdutlv"
+	"go-smpp/smpp/pdu/pdufield"
+	"go-smpp/smpp/pdu/pdutlv"
 )
 
 var nextSeq uint32

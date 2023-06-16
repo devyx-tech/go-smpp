@@ -86,6 +86,7 @@ loop:
 			case ESMClass:
 				mask := byte(1 << 6)
 				udhiFlag = mask == b&mask
+				f[UDHFlag] = &Flag{Data: udhiFlag}
 			}
 		case UDHLength:
 			if !udhiFlag {
@@ -223,6 +224,11 @@ loop:
 					return nil, fmt.Errorf("smLength is lesser than udhLength+1: have %d and %d",
 						smLength, udhLength)
 				}
+				// pdu := r.Next(udhLength)
+				// f[UDHHeader] = &UDH{
+				// 	IEI: &Fixed{ Data: pdu[2]},
+				// 	IELength:
+				// 	IEData:}
 				smLength -= udhLength + 1
 				f[SMLength] = &Fixed{Data: byte(smLength)}
 			}
