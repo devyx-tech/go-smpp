@@ -17,9 +17,9 @@ import (
 	"os"
 	"strings"
 
-	"go-smpp/smpp"
-	"go-smpp/smpp/pdu/pdufield"
-	"go-smpp/smpp/pdu/pdutext"
+	"github.com/devyx-tech/go-smpp/smpp"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdufield"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdutext"
 
 	"github.com/urfave/cli"
 )

@@ -7,8 +7,8 @@ package pdu
 import (
 	"io"
 
-	"go-smpp/smpp/pdu/pdufield"
-	"go-smpp/smpp/pdu/pdutlv"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdufield"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdutlv"
 )
 
 // MaxSize is the maximum size allowed for a PDU.
