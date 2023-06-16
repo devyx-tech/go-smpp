@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"go-smpp/smpp/pdu/pdutext"
+	"github.com/devyx-tech/go-smpp/smpp/pdu/pdutext"
 )
 
 func TestMapSet(t *testing.T) {

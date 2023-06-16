@@ -1,4 +1,4 @@
-module go-smpp
+module github.com/devyx-tech/go-smpp
 
 go 1.18
 
