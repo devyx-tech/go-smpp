@@ -17,11 +17,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli"
+	"go-smpp/smpp"
+	"go-smpp/smpp/pdu/pdufield"
+	"go-smpp/smpp/pdu/pdutext"
 
-	"github.com/veoo/go-smpp/smpp"
-	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
+	"github.com/urfave/cli"
 )
 
 // Version of smppcli.

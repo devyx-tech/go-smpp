@@ -6,14 +6,15 @@ package smpp
 
 import (
 	"crypto/tls"
-	"golang.org/x/net/context"
 	"io"
 	"math"
 	"sync"
 	"time"
 
-	"github.com/veoo/go-smpp/smpp/pdu"
-	"github.com/veoo/go-smpp/smpp/pdu/pdufield"
+	"golang.org/x/net/context"
+
+	"go-smpp/smpp/pdu"
+	"go-smpp/smpp/pdu/pdufield"
 )
 
 // ConnStatus is an abstract interface for a connection status change.

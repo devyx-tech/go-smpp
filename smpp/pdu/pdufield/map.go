@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/veoo/go-smpp/smpp/pdu/pdutext"
+	"go-smpp/smpp/pdu/pdutext"
 )
 
 // Map is a collection of PDU field data indexed by name.
