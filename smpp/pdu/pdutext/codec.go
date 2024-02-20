@@ -46,7 +46,7 @@ func Encode(typ DataCoding, text []byte) []byte {
 	case ISO88595Type:
 		return ISO88595(text).Encode()
 	default:
-		return ISO88591(text).Encode()
+		return GSM7(text).Encode()
 	}
 }
 
@@ -60,6 +60,6 @@ func Decode(typ DataCoding, text []byte) []byte {
 	case ISO88595Type:
 		return ISO88595(text).Decode()
 	default:
-		return ISO88591(text).Decode()
+		return GSM7(text).Decode()
 	}
 }
