@@ -3,7 +3,8 @@
     "allow": [
       "Bash(tree:*)",
       "Read(//f/**)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
