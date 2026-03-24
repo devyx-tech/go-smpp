@@ -1,158 +1,102 @@
 # Funcionalidades
 
+**Data de Análise:** 2026-03-24
+
 ## Funcionalidades Principais
 
-### 1. Envio de SMS (Transmitter)
-- **Descricao**: Envia mensagens curtas (SMS) para um SMSC via protocolo SMPP, usando binding do tipo Transmitter.
-- **Casos de Uso**: Sistemas de notificacao, marketing SMS, OTPs, alertas.
-- **Componentes Envolvidos**:
-  - `smpp/transmitter.go` — Struct `Transmitter`, metodos `Submit()`, `SubmitLongMsg()`, `QuerySM()`
-  - `smpp/client.go` — Gerenciamento de conexao persistente
-  - `smpp/pdu/types.go` — PDUs: `SubmitSM`, `SubmitSMResp`, `SubmitMulti`, `SubmitMultiResp`
-- **Dependencias**: Conexao TCP/TLS com SMSC
+### Envio de SMS (Transmitter)
 
-**Operacoes suportadas**:
-- `Submit()` — Envia mensagem curta simples (SubmitSM) ou multi-destinatario (SubmitMulti)
-- `SubmitLongMsg()` — Envia mensagem longa fragmentada com UDH (User Data Header)
-- `QuerySM()` — Consulta status de entrega de uma mensagem
+**O que faz:** Envia mensagens SMS para um SMSC via binding do tipo Transmitter do protocolo SMPP 3.4.
+**Casos de uso:** Notificações, marketing SMS, OTPs, alertas.
+**Componentes envolvidos:**
+- `smpp/transmitter.go` — struct `Transmitter`, métodos `Submit()`, `SubmitLongMsg()`, `QuerySM()`
+- `smpp/client.go` — gerenciamento de conexão persistente com reconnect
+- `smpp/pdu/types.go` — PDUs `SubmitSM`, `SubmitSMResp`, `SubmitMulti`, `SubmitMultiResp`
+**Dependências:** Conexão TCP/TLS com SMSC
 
-### 2. Recebimento de SMS (Receiver)
-- **Descricao**: Recebe mensagens (DeliverSM) de um SMSC via binding do tipo Receiver.
-- **Casos de Uso**: Recebimento de respostas de usuarios, delivery receipts, SMS bidirecional.
-- **Componentes Envolvidos**:
-  - `smpp/receiver.go` — Struct `Receiver`, handler function, merge de mensagens longas
-- **Dependencias**: Conexao TCP/TLS com SMSC
+**Operações:**
+- `Submit()` — envia mensagem simples (SubmitSM) ou multi-destinatário (SubmitMulti)
+- `SubmitLongMsg()` — fragmenta mensagem longa (>140 bytes) com UDH e envia partes
+- `QuerySM()` — consulta status de entrega de uma mensagem enviada
 
-**Caracteristicas**:
-- Handler function customizavel (`HandlerFunc`)
-- Auto-resposta de DeliverSMResp (configuravel via `SkipAutoRespondIDs`)
-- Merge automatico de mensagens longas concatenadas (UDH)
-- Cleanup periodico de partes de mensagens expiradas
+### Recepção de SMS (Receiver)
 
-### 3. Transceiver (Envio + Recebimento)
-- **Descricao**: Combina as funcionalidades de Transmitter e Receiver em uma unica conexao.
-- **Casos de Uso**: Aplicacoes que precisam enviar e receber SMS na mesma conexao.
-- **Componentes Envolvidos**:
-  - `smpp/transceiver.go` — Struct `Transceiver` (embute `Transmitter`)
-- **Dependencias**: Conexao TCP/TLS com SMSC
+**O que faz:** Recebe mensagens (DeliverSM) de um SMSC via binding do tipo Receiver.
+**Casos de uso:** Recepção de respostas, delivery receipts, SMS bidirecional.
+**Componentes envolvidos:**
+- `smpp/receiver.go` — struct `Receiver`, handler function, merge de mensagens longas
+**Dependências:** Conexão TCP/TLS com SMSC
 
-### 4. Servidor SMPP (Producao)
-- **Descricao**: Servidor SMPP para aplicacoes que atuam como SMSC ou gateway de mensagens.
-- **Casos de Uso**: Gateways SMS, agregadores, testes de integracao end-to-end.
-- **Componentes Envolvidos**:
-  - `smpp/server.go` — Struct `server`, interfaces `Server` e `Session`
-- **Dependencias**: `net.Listener` (TCP)
+**Características:**
+- Handler function customizável (`HandlerFunc`)
+- Auto-resposta de DeliverSMResp (configurável via `SkipAutoRespondIDs`)
+- Merge automático de mensagens longas concatenadas via UDH
+- Cleanup periódico de partes expiradas
 
-**Caracteristicas**:
-- Autenticacao via Bind PDU (configuravel com `HandleAuth`)
-- Handlers customizaveis por tipo de PDU (`Handle`)
-- Gerenciamento de sessoes com IDs aleatorios
+### Transceiver (Envio + Recepção)
+
+**O que faz:** Combina Transmitter e Receiver em uma única conexão SMPP.
+**Casos de uso:** Aplicações que enviam e recebem SMS na mesma conexão.
+**Componentes envolvidos:**
+- `smpp/transceiver.go` — struct `Transceiver` (embute `Transmitter`)
+**Dependências:** Conexão TCP/TLS com SMSC
+
+### Servidor SMPP
+
+**O que faz:** Servidor SMPP para aplicações que atuam como SMSC ou gateway.
+**Casos de uso:** Gateways SMS, agregadores, testes de integração.
+**Componentes envolvidos:**
+- `smpp/server.go` — interfaces `Server` e `Session`, handlers customizáveis
+**Dependências:** `net.Listener` (TCP)
+
+**Características:**
+- Autenticação via Bind PDU (customizável com `HandleAuth`)
+- Handlers por tipo de PDU via `Handle(id, func)`
+- Gerenciamento de sessions com IDs aleatórios
 - Suporte a TLS
 
-### 5. Codificacao de Texto
-- **Descricao**: Codecs de texto para converter mensagens entre formatos.
-- **Casos de Uso**: Envio de SMS em diferentes idiomas e character sets.
-- **Componentes Envolvidos**:
-  - `smpp/pdu/pdutext/` — Codecs: `GSM7`, `Latin1`, `UCS2`, `ISO88595`, `Raw`
-  - `smpp/encoding/gsm7.go` — Encoder/decoder GSM 7-bit (packed e unpacked)
+### Codificação de Texto
 
-**Codecs suportados**:
-| Codec | DataCoding | Descricao |
+**O que faz:** Codecs de texto para converter mensagens entre formatos suportados pelo SMPP.
+**Componentes envolvidos:**
+- `smpp/pdu/pdutext/` — codecs: `GSM7`, `Latin1`, `UCS2`, `ISO88595`, `Raw`
+- `smpp/encoding/gsm7.go` — encoder/decoder GSM 7-bit (packed e unpacked)
+
+| Codec | DataCoding | Descrição |
 |---|---|---|
-| `GSM7` | 0x00 | GSM 7-bit default alphabet (SMSC Default) |
+| `GSM7` | 0x00 | GSM 7-bit default alphabet |
 | `Latin1` | 0x03 | Windows-1252 / CP1252 |
 | `ISO88595` | 0x06 | ISO-8859-5 (Cyrillic) |
 | `UCS2` | 0x08 | UTF-16-BE (Unicode) |
-| `Raw` | 0x00 | Sem codificacao (passthrough) |
+| `Raw` | 0x00 | Sem codificação (passthrough) |
 
-### 6. Codificacao/Decodificacao de PDUs
-- **Descricao**: Serializacao e deserializacao binaria de PDUs SMPP conforme a especificacao 3.4.
-- **Casos de Uso**: Toda comunicacao SMPP passa por esta camada.
-- **Componentes Envolvidos**:
-  - `smpp/pdu/codec.go` — `Codec` base com `SerializeTo()` e `Decode()`
-  - `smpp/pdu/header.go` — Header de 16 bytes, `Status` com codigos de erro SMPP
-  - `smpp/pdu/types.go` — Definicao de 19 tipos de PDU
-  - `smpp/pdu/pdufield/` — Campos obrigatorios
-  - `smpp/pdu/pdutlv/` — Campos opcionais TLV
+### Codificação/Decodificação de PDUs
 
-**PDUs implementados**:
-- Bind: BindReceiver, BindTransmitter, BindTransceiver (+ respostas)
-- Mensagem: SubmitSM, DeliverSM, SubmitMulti (+ respostas)
-- Consulta: QuerySM (+ resposta)
-- Sessao: Unbind, EnquireLink, GenericNACK (+ respostas)
+**O que faz:** Serialização e deserialização binária de PDUs SMPP 3.4.
+**Componentes envolvidos:**
+- `smpp/pdu/codec.go` — `Codec` base com `SerializeTo()` e `Decode()`
+- `smpp/pdu/header.go` — Header 16 bytes, `Status` com 30+ códigos de erro
+- `smpp/pdu/types.go` — 19 tipos de PDU definidos
+- `smpp/pdu/pdufield/` — campos obrigatórios
+- `smpp/pdu/pdutlv/` — campos TLV opcionais (50+ tags)
 
-**PDUs nao implementados** (TODOs no codigo):
-- AlertNotification, CancelSM, ReplaceSM, DataSM, Outbind
+## Funcionalidades Secundárias
 
-## Funcionalidades Secundarias
+- **Conexão Persistente:** Reconnect automático com backoff exponencial (fator `e`, max 120s) ou intervalo fixo (`BindInterval`) — `smpp/client.go:132`
+- **EnquireLink (Keepalive):** Heartbeat periódico (mín. 10s) com timeout configurável. Unbind automático se SMSC não responder — `smpp/client.go:192`
+- **Rate Limiting:** Interface `RateLimiter` compatível com `golang.org/x/time/rate` — `smpp/client.go:84`
+- **Window Size:** Limite de mensagens inflight. Retorna `ErrMaxWindowSize` — `smpp/transmitter.go:276`
+- **Submit Multi:** Envio para até 254 destinatários + listas de distribuição — `smpp/transmitter.go:448`
+- **TLV Fields:** 50+ tags TLV padrão SMPP para campos opcionais — `smpp/pdu/pdutlv/`
+- **JSON Serialization:** `Codec.MarshalJSON()` e `UnmarshalJSON()` para debug — `smpp/pdu/codec.go:110`
+- **ConnMiddleware:** Interceptor de conexão para logging/métricas — `smpp/client.go:74`
+- **Servidor de Teste:** `smpptest.Server` com echo handler e broadcast — `smpp/smpptest/`
+- **CLI (smppcli):** Envio (`send`) e consulta (`query`) de SMS via linha de comando — `cmd/sms/main.go`
 
-### Conexao Persistente com Reconnect
-- Reconnect automatico com backoff exponencial (fator `e`, maximo 120s)
-- Intervalo de bind fixo opcional (`BindInterval`)
-- Notificacao de status via channel (`ConnStatus`)
-- **Componente**: `smpp/client.go:132` — metodo `Bind()`
+## PDUs Não Implementados
 
-### EnquireLink (Keepalive)
-- Envio periodico de EnquireLink PDU (intervalo configuravel, minimo 10s)
-- Timeout configuravel para resposta (`EnquireLinkTimeout`, default 3x intervalo)
-- Unbind automatico se o SMSC nao responder dentro do timeout
-- **Componente**: `smpp/client.go:192` — metodo `enquireLink()`
+- AlertNotification, CancelSM/CancelSMResp, ReplaceSM/ReplaceSMResp, DataSM/DataSMResp, Outbind
 
-### Rate Limiting
-- Interface `RateLimiter` compativel com `golang.org/x/time/rate`
-- Aplicado antes de cada Write no client
-- **Componente**: `smpp/client.go:84`
+---
 
-### Window Size Control
-- Limite de mensagens em voo (inflight)
-- Retorna `ErrMaxWindowSize` quando o limite e excedido
-- **Componente**: `smpp/transmitter.go:276-289`
-
-### Mensagens Longas (UDH)
-- Fragmentacao automatica em partes de 134 bytes (140 - 6 bytes UDH)
-- Referencia de 8 bits para identificacao de partes
-- **Envio**: `smpp/transmitter.go:333` — `SubmitLongMsg()`
-- **Recebimento**: `smpp/receiver.go:149` — `handlePDU()` com merge
-
-### Submit Multi
-- Envio para multiplos destinatarios em um unico PDU
-- Suporte a listas de distribuicao
-- Maximo 254 destinatarios (`MaxDestinationAddress`)
-- Informacao de destinatarios com falha via `UnsuccessSmes()`
-- **Componente**: `smpp/transmitter.go:448`
-
-### TLV (Tag-Length-Value)
-- Suporte a 50+ tags TLV padrao SMPP
-- Campos opcionais em PDUs via `TLVFields`
-- Tipos: `String`, `CString`, `MessageStateType`
-- **Componente**: `smpp/pdu/pdutlv/`
-
-### Servidor de Teste (smpptest)
-- Servidor SMPP leve para testes unitarios e de integracao
-- Echo handler padrao (ecoa PDUs recebidos)
-- Broadcast de mensagens para todos os clientes conectados
-- **Componente**: `smpp/smpptest/`
-
-### Serializacao JSON de PDUs
-- `Codec.MarshalJSON()` e `UnmarshalJSON()` para serializacao de PDUs em JSON
-- `pdufield.Map` serializa campos com representacao hex e texto
-- Util para logging e debugging
-- **Componente**: `smpp/pdu/codec.go:110-141`
-
-### CLI (smppcli)
-- Ferramenta de linha de comando para envio e consulta de SMS
-- Comandos: `send` (enviar SMS), `query` (consultar status)
-- Suporte a TLS, credenciais via flags ou env vars (`SMPP_USER`, `SMPP_PASSWD`)
-- Codificacoes: raw, ucs2, latin1
-- **Componente**: `cmd/sms/main.go`
-
-## Funcionalidades em Desenvolvimento
-
-Baseado nos TODOs encontrados no codigo:
-- AlertNotification PDU (`pdu/codec.go`)
-- CancelSM / CancelSMResp PDU (`pdu/codec.go`)
-- ReplaceSM / ReplaceSMResp PDU (`pdu/codec.go`)
-- DataSM / DataSMResp PDU (`pdu/codec.go`)
-- Outbind PDU (`pdu/codec.go`)
-- Validacao do UnbindResp no Close (`client.go:257`)
-- Correcao do codec UCS2/Latin1 (`pdutext/doc.go`)
+*Análise de funcionalidades: 2026-03-24*

@@ -1,89 +1,83 @@
-# Regras de Negocio
+# Regras de Negócio
 
-## Contexto
+**Data de Análise:** 2026-03-24
 
-As "regras de negocio" deste repositorio sao definidas pela especificacao SMPP 3.4 (Short Message Peer-to-Peer Protocol). O protocolo define como aplicacoes (ESMEs) se comunicam com centros de servico de mensagens (SMSCs) para envio e recebimento de SMS.
+## Regras Críticas
 
-## Regras Criticas
+### Binding obrigatório antes de qualquer operação
 
-### 1. Binding obrigatorio antes de qualquer operacao
-- **Descricao**: Toda comunicacao SMPP exige que o cliente primeiro estabeleca um bind (BindTransmitter, BindReceiver ou BindTransceiver) antes de enviar/receber mensagens.
-- **Justificativa**: Especificacao SMPP 3.4 — o bind autentica e define o modo de operacao.
-- **Implementacao**: `smpp/transmitter.go:70` (Bind), `smpp/conn.go:25` (`ErrNotBound`)
-- **Validacoes**: Operacoes como `Submit()` verificam se o bind foi realizado; retornam `ErrNotBound` caso contrario.
+**Regra:** Toda comunicação SMPP exige um bind (BindTransmitter, BindReceiver ou BindTransceiver) antes de enviar ou receber mensagens.
+**Justificativa:** Especificação SMPP 3.4 — o bind autentica o cliente e define o modo de operação.
+**Implementação:** `smpp/transmitter.go:70` (Bind), `smpp/conn.go:25` (`ErrNotBound`)
+**Validações:** `Submit()` e `QuerySM()` verificam se o bind foi realizado; retornam `ErrNotBound` caso contrário.
 
-### 2. Interface Version fixa em 0x34
-- **Descricao**: O campo `interface_version` e sempre definido como `0x34` (52 decimal) durante o bind.
-- **Justificativa**: Indica ao SMSC que o cliente suporta SMPP versao 3.4.
-- **Implementacao**: `smpp/client.go:296` — `bind()` seta `pdufield.InterfaceVersion` para `0x34`.
+### Interface Version fixa em 0x34
 
-### 3. Sequence number unico por PDU
-- **Descricao**: Cada PDU enviado recebe um sequence number unico que e usado para correlacionar requisicoes com respostas.
-- **Justificativa**: O SMPP e um protocolo assincronico — multiplas requisicoes podem estar em voo simultaneamente.
-- **Implementacao**: Dois mecanismos:
-  - Contador atomico global: `smpp/pdu/codec.go:19` (`nextSeq`)
-  - Factory isolada: `smpp/pdu/factory.go:62-69` com wrap em `0x7FFFFFFF`
-- **Validacoes**: O Transmitter mantem um mapa de `inflight` (`transmitter.go:58`) para correlacionar respostas pelo seq number.
+**Regra:** Defina `interface_version` como `0x34` (52 decimal) em todo bind PDU.
+**Justificativa:** Indica ao SMSC que o cliente suporta SMPP versão 3.4.
+**Implementação:** `smpp/client.go:296` — `bind()` seta `pdufield.InterfaceVersion` para `0x34`.
 
-### 4. Limite maximo de PDU: 4096 bytes
-- **Descricao**: Nenhum PDU pode exceder 4096 bytes.
-- **Justificativa**: Definido na especificacao SMPP 3.4 como tamanho maximo de PDU.
-- **Implementacao**: `smpp/pdu/body.go:15` — `MaxSize = 4096`
-- **Validacoes**: `DecodeHeader()` em `header.go:130` rejeita PDUs maiores que `MaxSize`.
+### Sequence number único por PDU
 
-### 5. Header de PDU: exatamente 16 bytes
-- **Descricao**: Todo PDU tem um header de 16 bytes contendo Length (4), Command ID (4), Status (4) e Sequence Number (4), em big-endian.
-- **Justificativa**: Formato definido pela especificacao SMPP 3.4.
-- **Implementacao**: `smpp/pdu/header.go:108` — `HeaderLen = 16`
-- **Validacoes**: PDUs menores que 16 bytes sao rejeitados (`header.go:127`).
+**Regra:** Cada PDU enviado recebe um sequence number único para correlacionar requisições com respostas.
+**Justificativa:** SMPP é protocolo assíncrono — múltiplas requisições em voo simultaneamente.
+**Implementação:**
+- Contador atômico global: `smpp/pdu/codec.go:19` (`nextSeq`)
+- Factory isolada: `smpp/pdu/factory.go:62-69` com wrap em `0x7FFFFFFF`
+**Validações:** Transmitter mantém mapa `inflight` (`smpp/transmitter.go:58`) para correlação.
 
-### 6. Mensagem curta limitada a 140 bytes
-- **Descricao**: O campo `short_message` tem um limite de 140 octetos. Mensagens maiores devem ser fragmentadas via UDH.
-- **Justificativa**: Limite definido pelo protocolo SMPP/GSM.
-- **Implementacao**: `smpp/transmitter.go:334` — `maxLen = 134` (140 - 6 bytes de UDH header)
-- **Excepcoes**: Pode-se usar `message_payload` TLV para payloads maiores (nao implementado neste repo).
+### Limite máximo de PDU: 4096 bytes
 
-### 7. Maximo de 254 destinatarios em SubmitMulti
-- **Descricao**: O PDU SubmitMulti suporta no maximo 254 enderecos de destino.
-- **Justificativa**: Limite definido pela especificacao SMPP 3.4 (campo `number_of_dests` e uint8).
-- **Implementacao**: `smpp/transmitter.go:30` — `MaxDestinationAddress = 254`
-- **Validacoes**: `submitMsgMulti()` em `transmitter.go:450-453` verifica o limite e retorna erro.
+**Regra:** Nenhum PDU pode exceder 4096 bytes.
+**Justificativa:** Definido na especificação SMPP 3.4.
+**Implementação:** `smpp/pdu/body.go:15` — `MaxSize = 4096`
+**Validações:** `DecodeHeader()` em `smpp/pdu/header.go:130` rejeita PDUs maiores que `MaxSize`.
 
-## Validacoes e Restricoes
+### Header de PDU: exatamente 16 bytes
 
-### Autenticacao
-- O servidor valida `system_id` e `password` no bind PDU
-- Credenciais invalidas resultam em `InvalidSystemID` (0x0000000f) ou `InvalidPassword` (0x0000000e)
-- **Implementacao**: `smpp/server.go:258-293`
+**Regra:** Todo PDU tem header de 16 bytes: Length (4) + Command ID (4) + Status (4) + Sequence Number (4), big-endian.
+**Justificativa:** Formato definido pela especificação SMPP 3.4.
+**Implementação:** `smpp/pdu/header.go:108` — `HeaderLen = 16`
+**Validações:** PDUs menores que 16 bytes são rejeitados em `smpp/pdu/header.go:127`.
 
-### Status de resposta SMPP
-Todas as respostas PDU carregam um status code. A biblioteca mapeia 30+ codigos de status SMPP para mensagens de erro Go:
-- `OK` (0x00000000) — sucesso
-- `InvalidMessageLength` (0x00000001)
-- `BindFailed` (0x0000000d)
-- `MessageQueueFull` (0x00000014)
-- `ThrottlingError` (0x00000058)
-- Lista completa em `smpp/pdu/header.go:22-69`
+### Mensagem curta limitada a 140 bytes
 
-### Codificacao de texto (DataCoding)
-- O campo `data_coding` e configurado automaticamente quando `ShortMessage` recebe um `pdutext.Codec`
-- O campo `sm_length` e calculado automaticamente apos o encode do texto
-- **Implementacao**: `smpp/pdu/pdufield/map.go:46-57`
+**Regra:** O campo `short_message` tem limite de 140 octetos. Mensagens maiores devem ser fragmentadas via UDH.
+**Justificativa:** Limite do protocolo SMPP/GSM.
+**Implementação:** `smpp/transmitter.go:334` — `maxLen = 134` (140 - 6 bytes de UDH header)
+**Exceções:** O TLV `message_payload` permite payloads maiores (não implementado neste repositório).
 
-## Politicas e Workflows
+### Máximo de 254 destinatários em SubmitMulti
 
-### Workflow de Conexao
+**Regra:** SubmitMulti suporta no máximo 254 endereços de destino.
+**Justificativa:** Campo `number_of_dests` é uint8 (max 254 na spec SMPP 3.4).
+**Implementação:** `smpp/transmitter.go:30` — `MaxDestinationAddress = 254`
+**Validações:** `submitMsgMulti()` em `smpp/transmitter.go:450-453` verifica e retorna erro.
+
+## Validações e Restrições
+
+- **Autenticação do servidor:** Valida `system_id` e `password` no bind PDU. Credenciais inválidas resultam em `InvalidSystemID` (0x0F) ou `InvalidPassword` (0x0E) — `smpp/server.go:258-293`
+- **DataCoding automático:** Configurado automaticamente quando `ShortMessage` recebe um `pdutext.Codec` — `smpp/pdu/pdufield/map.go:46-57`
+- **sm_length automático:** Calculado automaticamente após encode do texto — `smpp/pdu/pdufield/map.go`
+- **EnquireLink mínimo 10s:** O intervalo de EnquireLink não pode ser menor que 10 segundos — `smpp/client.go:121-123`
+- **Window size:** Se configurado, rejeita envio quando mensagens inflight excedem o limite — `smpp/transmitter.go:283-289`
+
+## Políticas e Workflows
+
+### Workflow de Conexão
+
 1. Client chama `Bind()` — retorna channel de status
-2. `client.Bind()` inicia loop de conexao em goroutine
+2. `client.Bind()` inicia loop de conexão em goroutine
 3. Dial TCP/TLS para o SMSC
 4. Se falha: notifica `ConnectionFailed`, retry com backoff exponencial
 5. Envia bind PDU (BindTransmitter/Receiver/Transceiver)
 6. Se falha: notifica `BindFailed`, retry
 7. Se sucesso: notifica `Connected`, inicia enquireLink e handlePDU
-8. Se conexao cai: notifica `Disconnected`, retry
+8. Se conexão cai: notifica `Disconnected`, retry
 
 ### Workflow de Envio (Submit)
-1. Verifica se bind foi realizado (`ErrNotBound`)
+
+1. Verifica bind (`ErrNotBound`)
 2. Verifica window size (`ErrMaxWindowSize`)
 3. Registra request no mapa inflight com seq number
 4. Aplica rate limiter (se configurado)
@@ -93,47 +87,54 @@ Todas as respostas PDU carregam um status code. A biblioteca mapeia 30+ codigos 
 8. Retorna `ShortMessage` com resposta
 
 ### Workflow de EnquireLink
-1. Envia EnquireLink periodicamente (intervalo configuravel, minimo 10s)
-2. Registra timestamp de ultima resposta recebida
-3. Se tempo desde ultima resposta > `EnquireLinkTimeout` (default 3x intervalo):
-   - Envia Unbind
-   - Fecha conexao
-   - Trigger reconnect
 
-### Workflow de Mensagens Longas (Recebimento)
-1. Recebe DeliverSM com UDH flag no ESMClass
+1. Envia EnquireLink periodicamente (intervalo configurável, mín. 10s)
+2. Registra timestamp de última resposta recebida
+3. Se tempo desde última resposta > `EnquireLinkTimeout` (default 3x intervalo): Unbind + Close + reconnect
+
+### Workflow de Mensagens Longas (Recepção)
+
+1. Recebe DeliverSM com UDH
 2. Decodifica UDH header (IEI 0x00 = concatenated short messages)
 3. Armazena parte em `MergeHolder` indexado por message ID
 4. Quando todas as partes chegam: ordena por part ID, concatena, chama handler
-5. Cleanup periodico remove partes expiradas (`MergeInterval`)
+5. Cleanup periódico remove partes expiradas (`MergeInterval`)
 
-## Regras de Dominio
+## Regras de Domínio
 
 ### Modos de Delivery Receipt
-- `NoDeliveryReceipt` (0x00) — Sem confirmacao de entrega
-- `FinalDeliveryReceipt` (0x01) — Confirmacao final de entrega
-- `FailureDeliveryReceipt` (0x02) — Apenas em caso de falha
+
+- `NoDeliveryReceipt` (0x00) — sem confirmação de entrega
+- `FinalDeliveryReceipt` (0x01) — confirmação final
+- `FailureDeliveryReceipt` (0x02) — apenas em falha
 
 ### Estados de Mensagem (QuerySM)
-| Codigo | Estado | Descricao |
+
+| Código | Estado | Descrição |
 |---|---|---|
 | 0 | SCHEDULED | Agendada para envio |
-| 1 | ENROUTE | Em transito |
+| 1 | ENROUTE | Em trânsito |
 | 2 | DELIVERED | Entregue |
 | 3 | EXPIRED | Expirada |
 | 4 | DELETED | Deletada |
-| 5 | UNDELIVERABLE | Nao entregavel |
+| 5 | UNDELIVERABLE | Não entregável |
 | 6 | ACCEPTED | Aceita |
-| 7 | UNKNOWN | Estado desconhecido |
+| 7 | UNKNOWN | Desconhecido |
 | 8 | REJECTED | Rejeitada |
 | 9 | SKIPPED | Ignorada |
 
 ### Validade de Mensagem
+
 - Formato SMPP absoluto: `YYMMDDhhmmsstnnp` (spec 7.1.1)
-- Calculada como `now().UTC().Add(validity)`, formatada com sufixo `"000+"`
-- **Implementacao**: `smpp/transmitter.go:582-586`
+- Calculada como `now().UTC().Add(validity)` com sufixo `"000+"`
+- **Implementação:** `smpp/transmitter.go:582-586`
 
 ### Tipos de Destino em SubmitMulti
-- `0x01` — SME Address (endereco de telefone)
-- `0x02` — Distribution List (lista de distribuicao)
-- **Implementacao**: `smpp/transmitter.go:458-474`
+
+- `0x01` — SME Address (endereço de telefone)
+- `0x02` — Distribution List (lista de distribuição)
+- **Implementação:** `smpp/transmitter.go:458-474`
+
+---
+
+*Análise de regras de negócio: 2026-03-24*

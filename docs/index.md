@@ -1,28 +1,34 @@
-# Documentacao do go-smpp
+# go-smpp
 
-## Visao Geral
+**Data de Análise:** 2026-03-24
 
-O `go-smpp` e uma biblioteca Go que implementa o protocolo SMPP 3.4 (Short Message Peer-to-Peer), utilizado para envio e recebimento de mensagens SMS entre aplicacoes (ESMEs) e centros de servico de mensagens curtas (SMSCs).
+## Visão Geral
 
-A biblioteca fornece abstraccoes de alto nivel para os tres modos de operacao SMPP — Transmitter (envio), Receiver (recebimento) e Transceiver (ambos) — com gerenciamento automatico de conexao, reconexao com backoff exponencial, rate limiting e suporte a mensagens longas (concatenadas via UDH). Inclui tambem um servidor SMPP completo para testes e um servidor de producao com sessoes e handlers customizaveis.
+go-smpp é uma biblioteca Go que implementa o protocolo SMPP 3.4 (Short Message Peer-to-Peer). Fornece client e server SMPP com suporte a conexões persistentes, reconexão automática com backoff exponencial, rate limiting, TLS, e múltiplos encodings de texto (GSM7, UCS2, Latin1, ISO-8859-5).
 
-Modulo Go: `github.com/devyx-tech/go-smpp`
+A biblioteca é consumida como dependência Go por aplicações que precisam enviar ou receber SMS via SMSC (Short Message Service Center). Inclui também uma ferramenta CLI (`cmd/sms/`) para envio e consulta de mensagens via linha de comando.
 
-## Documentacao Disponivel
+## Documentação
 
 ### Arquitetura e Stack
-- [Stack Tecnologica](stack.md) — Tecnologias, frameworks e ferramentas utilizadas
-- [Padroes de Design](patterns.md) — Padroes arquiteturais e de codigo
+- [Stack Tecnológica](stack.md) — Go 1.18, dependências, runtime
+- [Arquitetura](architecture.md) — Camadas PDU, client, server, fluxo de dados
+- [Estrutura](structure.md) — Layout de diretórios, onde colocar código novo
+
+### Convenções e Testes
+- [Convenções](conventions.md) — Padrões de código prescritivos
+- [Testes](testing.md) — Infraestrutura e padrões de teste com smpptest
 
 ### Funcionalidades e Regras
-- [Funcionalidades](features.md) — Descricao das funcionalidades principais
-- [Regras de Negocio](business-rules.md) — Regras do protocolo SMPP implementadas
+- [Funcionalidades](features.md) — Transmitter, Receiver, Transceiver, Server, encodings
+- [Regras de Negócio](business-rules.md) — Regras do protocolo SMPP 3.4, validações, encoding
 
-### Integracoes
-- [Integracoes](integrations.md) — Comunicacao com SMSCs e dependencias externas
+### Integrações e Saúde
+- [Integrações](integrations.md) — Conexões TCP/TLS, rate limiting
+- [Preocupações](concerns.md) — PDUs não implementados, tech debt
 
-## Links Rapidos
-- Repositorio: `github.com/devyx-tech/go-smpp`
-- Licenca: MIT
-- Versao do protocolo: SMPP 3.4
-- Go minimo: 1.18
+## Links Rápidos
+- Repositório: `github.com/devyx-tech/go-smpp`
+- Import: `github.com/devyx-tech/go-smpp/smpp`
+- CLI: `go run ./cmd/sms/`
+- Testes: `go test ./...`
